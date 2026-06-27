@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="vscode_bg">#1e1e1e</color>
+    <color name="vscode_sidebar">#252526</color>
+    <color name="vscode_activity_bar">#333333</color>
+    <color name="vscode_status_bar">#007acc</color>
+    <color name="vscode_card_bg">#2d2d2d</color>
+    <color name="vscode_card_stroke">#3c3c3c</color>
+    <color name="vscode_text_primary">#eeeeee</color>
+    <color name="vscode_text_secondary">#858585</color>
+    <color name="vscode_link">#3794ff</color>
+    <color name="vscode_badge_bg">#004b72</color>
+</resources>

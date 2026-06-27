@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_height"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/vscode_bg">
+
+    <!-- 1. Top Title/Search Bar -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@color/vscode_bg"
+        android:elevation="2dp"
+        android:paddingHorizontal="12dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_alignParentStart="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="File   Edit   Selection   View"
+                android:textColor="@color/vscode_text_secondary"
+                android:textSize="12sp"
+                android:layout_marginEnd="16dp" />
+        </LinearLayout>
+
+        <!-- Search Box -->
+        <LinearLayout
+            android:layout_width="200dp"
+            android:layout_height="28dp"
+            android:layout_centerInParent="true"
+            android:background="@color/vscode_card_bg"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔍 "
+                android:textColor="@color/vscode_text_secondary"
+                android:textSize="11sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="my-web-app"
+                android:textColor="@color/vscode_text_primary"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/vscode_card_stroke" />
+
+    <!-- 2. Main Scrollable Area -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- VS Code Header -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Visual Studio Code"
+                android:textColor="@color/vscode_text_primary"
+                android:textSize="28sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Editing evolved"
+                android:textColor="@color/vscode_text_secondary"
+                android:textSize="16sp"
+                android:layout_marginTop="4dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="24dp" />
+
+            <!-- Start Section -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start"
+                android:textColor="@color/vscode_text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📄 New File..."
+                android:textColor="@color/vscode_link"
+                android:textSize="14sp"
+                android:paddingVertical="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📁 Open File..."
+                android:textColor="@color/vscode_link"
+                android:textSize="14sp"
+                android:paddingVertical="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📂 Open Folder..."
+                android:textColor="@color/vscode_link"
+                android:textSize="14sp"
+                android:paddingVertical="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🌿 Clone Git Repository..."
+                android:textColor="@color/vscode_link"
+                android:textSize="14sp"
+                android:paddingVertical="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🔗 Connect to..."
+                android:textColor="@color/vscode_link"
+                android:textSize="14sp"
+                android:paddingVertical="8dp" />
+
+            <!-- Recent Section -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="20dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Recent"
+                android:textColor="@color/vscode_text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="You have no recent folders, open a folder to start."
+                android:textColor="@color/vscode_text_secondary"
+                android:textSize="12sp"
+                android:layout_marginTop="8dp" />
+
+            <!-- Walkthroughs Section -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="24dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Walkthroughs"
+                android:textColor="@color/vscode_text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="10dp" />
+
+            <!-- Walkthrough Card 1 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/vscode_card_bg"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Get Started with VS Code"
+                    android:textColor="@color/vscode_text_primary"
+                    android:textStyle="bold"
+                    android:textSize="13sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Customize your editor, learn the basics, and start coding"
+                    android:textColor="@color/vscode_text_secondary"
+                    android:textSize="11sp"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <!-- Walkthrough Card 2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/vscode_card_bg"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Learn the Fundamentals"
+                    android:textColor="@color/vscode_text_primary"
+                    android:textStyle="bold"
+                    android:textSize="13sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Get to know the essential editing features"
+                    android:textColor="@color/vscode_text_secondary"
+                    android:textSize="11sp"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <!-- Walkthrough Card 3 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/vscode_card_bg"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp">
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="GitHub Copilot"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textStyle="bold"
+                        android:textSize="13sp"
+                        android:layout_alignParentStart="true" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=" Updated "
+                        android:textColor="@color/vscode_text_primary"
+                        android:background="@color/vscode_badge_bg"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:layout_alignParentEnd="true" />
+                </RelativeLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Your AI pair programmer, auto-completing code in real-time"
+                    android:textColor="@color/vscode_text_secondary"
+                    android:textSize="11sp"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <!-- More Walkthroughs -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="More..."
+                android:textColor="@color/vscode_link"
+                android:textSize="12sp"
+                android:layout_marginTop="8dp" />
+
+            <!-- Startup Checkbox -->
+            <CheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Show welcome page on startup"
+                android:textColor="@color/vscode_text_secondary"
+                android:textSize="12sp"
+                android:checked="true"
+                android:buttonTint="@color/vscode_text_secondary"
+                android:layout_marginTop="24dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- 3. Bottom Activity Bar Mimic -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@color/vscode_sidebar"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="📁"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:textColor="@color/vscode_text_primary" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="🔍"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:textColor="@color/vscode_text_secondary" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="🌿"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:textColor="@color/vscode_text_secondary" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="▶"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:textColor="@color/vscode_text_secondary" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="⚙"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:textColor="@color/vscode_text_secondary" />
+    </LinearLayout>
+
+    <!-- 4. Bottom Status Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="22dp"
+        android:background="@color/vscode_status_bar"
+        android:orientation="horizontal"
+        android:paddingHorizontal="10dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🌿 main"
+            android:textColor="@android:color/white"
+            android:textSize="10sp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="UTF-8   Kotlin   0 ⓧ  0 ⚠"
+            android:textColor="@android:color/white"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+</LinearLayout>

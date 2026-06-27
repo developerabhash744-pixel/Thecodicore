@@ -1,4 +1,4 @@
-name: Java CI with Maven
+name: Android CI
 
 on:
   push:
@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -20,13 +19,19 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: maven
+        cache: gradle
 
-    - name: Build and Test with Maven
-      run: mvn -B clean package --file pom.xml
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
 
-    - name: Upload Compiled JAR
+    - name: Build Debug APK
+      run: gradle assembleDebug
+
+    - name: Copy APK to root
+      run: cp app/build/outputs/apk/debug/app-debug.apk .
+
+    - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
-        name: java-app-executable
-        path: target/java-app-1.0-SNAPSHOT.jar
+        name: app-debug-apk
+        path: app-debug.apk
