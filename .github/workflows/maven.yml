@@ -24,3 +24,9 @@ jobs:
 
     - name: Build and Test with Maven
       run: mvn -B clean package --file pom.xml
+
+    - name: Upload Compiled JAR
+      uses: actions/upload-artifact@v4
+      with:
+        name: java-app-executable
+        path: target/java-app-1.0-SNAPSHOT.jar
