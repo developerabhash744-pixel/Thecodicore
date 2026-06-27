@@ -16,6 +16,12 @@
     </properties>
 
     <dependencies>
+        <!-- FlatLaf for modern VS Code-like Look and Feel -->
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+            <version>3.4.1</version>
+        </dependency>
         <!-- JUnit Jupiter API for writing tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
