@@ -11,29 +11,271 @@
             padding: 0;
             overflow: hidden;
             background-color: #1e1e1e;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #cccccc;
+            user-select: none;
         }
-        #container {
+        
+        #app-layout {
+            display: flex;
+            flex-direction: column;
             width: 100%;
             height: 100%;
+        }
+
+        /* 1. Tab Bar (VS Code styled) */
+        #tab-bar {
+            display: flex;
+            height: 35px;
+            background-color: #181818;
+            border-bottom: 1px solid #2d2d2d;
+            align-items: flex-end;
+            padding-left: 10px;
+        }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            height: 30px;
+            padding: 0 16px;
+            background-color: #2d2d2d;
+            border-right: 1px solid #252526;
+            font-size: 12px;
+            color: #969696;
+            cursor: pointer;
+            border-top: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            border-top: 2px solid #007acc;
+        }
+
+        .tab .tab-close {
+            margin-left: 8px;
+            font-size: 11px;
+            color: #858585;
+            border-radius: 3px;
+            padding: 1px 3px;
+            cursor: pointer;
+        }
+
+        .tab .tab-close:hover {
+            background-color: #383838;
+            color: #ffffff;
+        }
+
+        /* 2. Main content views */
+        #view-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        #editor-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 3. Welcome Page view */
+        #welcome-view {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            padding: 40px;
+            overflow-y: auto;
+            background-color: #1e1e1e;
+        }
+
+        .welcome-header {
+            margin-bottom: 30px;
+            border-bottom: 1.5px solid #2d2d2d;
+            padding-bottom: 16px;
+        }
+
+        .welcome-header h1 {
+            font-size: 28px;
+            font-weight: 300;
+            color: #ffffff;
+            margin: 0 0 4px 0;
+        }
+
+        .welcome-header p {
+            font-size: 14px;
+            color: #858585;
+            margin: 0;
+        }
+
+        .welcome-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            max-width: 900px;
+        }
+
+        .welcome-column {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .welcome-section {
+            margin-bottom: 24px;
+        }
+
+        .welcome-section h2 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e1e1e1;
+            margin: 0 0 12px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .welcome-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin-left: -12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-decoration: none;
+            color: #3794ff;
+            font-size: 13px;
+        }
+
+        .welcome-item:hover {
+            background-color: #2d2d2d;
+        }
+
+        .welcome-item svg {
+            width: 16px;
+            height: 16px;
+            margin-right: 10px;
+            fill: #3794ff;
+        }
+
+        .welcome-item span {
+            color: #858585;
+            margin-left: 6px;
+        }
+
+        /* Walkthrough cards */
+        .walkthrough-card {
+            background-color: #252526;
+            border: 1px solid #2d2d2d;
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .walkthrough-card:hover {
+            border-color: #007acc;
+        }
+
+        .walkthrough-card h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0 0 4px 0;
+        }
+
+        .walkthrough-card p {
+            font-size: 11px;
+            color: #858585;
+            margin: 0;
         }
     </style>
 </head>
 <body>
-    <div id="container"></div>
+    <div id="app-layout">
+        <!-- Tab Bar -->
+        <div id="tab-bar">
+            <div id="tab-welcome" class="tab active" onclick="showWelcome()">
+                <span>Welcome</span>
+            </div>
+            <div id="tab-editor" class="tab" style="display: none;" onclick="showEditorView()">
+                <span id="tab-filename">File.java</span>
+                <span class="tab-close" onclick="closeActiveFile(event)">✕</span>
+            </div>
+        </div>
+
+        <!-- View Container -->
+        <div id="view-container">
+            <!-- 1. Editor View -->
+            <div id="editor-container"></div>
+
+            <!-- 2. Welcome View -->
+            <div id="welcome-view">
+                <div class="welcome-header">
+                    <h1>Visual Studio Code</h1>
+                    <p>Editing Evolved - Mobile Edition</p>
+                </div>
+
+                <div class="welcome-grid">
+                    <!-- Left Column -->
+                    <div class="welcome-column">
+                        <div class="welcome-section">
+                            <h2>Start</h2>
+                            
+                            <div class="welcome-item" onclick="triggerNewFile()">
+                                <svg viewBox="0 0 16 16"><path d="M14 4.5V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h6.5L14 4.5zm-4.5-3H3v12h10V5H9.5V1.5z"/></svg>
+                                New File...
+                            </div>
+                            
+                            <div class="welcome-item" onclick="triggerOpenFile()">
+                                <svg viewBox="0 0 16 16"><path d="M14.5 2H9.7l-1.4-1.4C8.1.2 7.7 0 7.3 0H1.5C.7 0 0 .7 0 1.5v13C0 15.3.7 16 1.5 16h13c.8 0 1.5-.7 1.5-1.5v-11c0-.8-.7-1.5-1.5-1.5zM15 14.5c0 .3-.2.5-.5.5h-13c-.3 0-.5-.2-.5-.5v-11c0-.3.2-.5.5-.5h5.8l1.4 1.4c.2.2.5.3.8.3h5.5c.3 0 .5.2.5.5v9.3z"/></svg>
+                                Open Workspace Files...
+                            </div>
+                        </div>
+
+                        <div class="welcome-section">
+                            <h2>Recent Workspace</h2>
+                            <div id="recent-files-list">
+                                <!-- Populated dynamically by Android -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="welcome-column">
+                        <div class="welcome-section">
+                            <h2>Walkthroughs</h2>
+                            
+                            <div class="walkthrough-card" onclick="triggerWalkthrough('started')">
+                                <h3>Get Started with VS Code Mobile</h3>
+                                <p>Discover the best settings, layout options, and keyboard shortcuts.</p>
+                            </div>
+
+                            <div class="walkthrough-card" onclick="triggerWalkthrough('theme')">
+                                <h3>Customize Your Editor Theme</h3>
+                                <p>Switch between Dark, Light, and High Contrast coding themes.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Monaco loader -->
     <script src="vs/loader.js"></script>
     <script>
+        var activeFilePath = "";
+
         require.config({ paths: { vs: 'vs' } });
 
         require(['vs/editor/editor.main'], function () {
-            window.editor = monaco.editor.create(document.getElementById('container'), {
-                value: [
-                    '// Welcome to Thecodicore Offline Editor!',
-                    'function helloWorld() {',
-                    '    console.log("Hello, World!");',
-                    '}'
-                ].join('\n'),
+            window.editor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: '',
                 language: 'javascript',
                 theme: 'vs-dark',
                 automaticLayout: true,
@@ -47,11 +289,62 @@
                     window.Android.onCursorChanged(e.position.lineNumber, e.position.column);
                 }
             });
+
+            // Ctrl+S keybinding command to trigger file saving
+            window.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function () {
+                if (window.Android && window.Android.saveActiveFile) {
+                    window.Android.saveActiveFile(window.editor.getValue());
+                }
+            });
+
+            // Let Android know that Monaco is ready and load recent files
+            if (window.Android && window.Android.onEditorReady) {
+                window.Android.onEditorReady();
+            }
         });
 
-        // Global functions for Android WebView Java code to invoke
+        // Toggle Views
+        function showWelcome() {
+            document.getElementById('welcome-view').style.display = 'flex';
+            document.getElementById('editor-container').style.display = 'none';
+            
+            document.getElementById('tab-welcome').classList.add('active');
+            document.getElementById('tab-editor').classList.remove('active');
+
+            if (window.Android && window.Android.onActiveFileChanged) {
+                window.Android.onActiveFileChanged(""); // Let Android know no file is active
+            }
+        }
+
+        function showEditorView() {
+            document.getElementById('welcome-view').style.display = 'none';
+            document.getElementById('editor-container').style.display = 'block';
+            
+            document.getElementById('tab-welcome').classList.remove('active');
+            document.getElementById('tab-editor').classList.add('active');
+
+            if (window.editor) {
+                window.editor.layout();
+            }
+
+            if (window.Android && window.Android.onActiveFileChanged) {
+                window.Android.onActiveFileChanged(activeFilePath);
+            }
+        }
+
+        function closeActiveFile(event) {
+            if (event) event.stopPropagation(); // Avoid triggering tab click
+            
+            document.getElementById('tab-editor').style.display = 'none';
+            activeFilePath = "";
+            showWelcome();
+        }
+
+        // Global APIs invoked by Android Java code
         window.setEditorValue = function (value, filepath) {
             if (!window.editor) return;
+            
+            activeFilePath = filepath;
             window.editor.setValue(value);
             
             // Detect language based on extension
@@ -65,7 +358,13 @@
             var model = window.editor.getModel();
             monaco.editor.setModelLanguage(model, lang);
 
-            // Notify Android of the active language update
+            // Update Tab Indicator
+            var filename = filepath.substring(filepath.lastIndexOf('/') + 1);
+            document.getElementById('tab-filename').innerText = filename;
+            document.getElementById('tab-editor').style.display = 'flex';
+            
+            showEditorView();
+
             if (window.Android && window.Android.onLanguageChanged) {
                 window.Android.onLanguageChanged(lang.toUpperCase());
             }
@@ -89,6 +388,47 @@
         window.toggleMinimap = function (enabled) {
             if (!window.editor) return;
             window.editor.updateOptions({ minimap: { enabled: enabled } });
+        };
+
+        // Welcome page click triggers
+        function triggerNewFile() {
+            if (window.Android && window.Android.onNewFileClicked) {
+                window.Android.onNewFileClicked();
+            }
+        }
+
+        function triggerOpenFile() {
+            if (window.Android && window.Android.onOpenFileClicked) {
+                window.Android.onOpenFileClicked();
+            }
+        }
+
+        function triggerWalkthrough(type) {
+            if (window.Android && window.Android.onWalkthroughClicked) {
+                window.Android.onWalkthroughClicked(type);
+            }
+        }
+
+        // Method called by Android to populate recent files
+        window.populateRecentFiles = function (filesJson) {
+            var list = document.getElementById('recent-files-list');
+            list.innerHTML = "";
+            var files = JSON.parse(filesJson);
+            if (files.length === 0) {
+                list.innerHTML = "<div style='font-size:12px; color:#858585; padding-left:12px;'>No recent files</div>";
+                return;
+            }
+            files.forEach(function (file) {
+                var item = document.createElement('div');
+                item.className = "welcome-item";
+                item.innerHTML = '<svg viewBox="0 0 16 16"><path d="M14 4.5V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h6.5L14 4.5zm-4.5-3H3v12h10V5H9.5V1.5z"/></svg>' + file.name;
+                item.onclick = function () {
+                    if (window.Android && window.Android.openRecentFile) {
+                        window.Android.openRecentFile(file.path);
+                    }
+                };
+                list.appendChild(item);
+            });
         };
     </script>
 </body>

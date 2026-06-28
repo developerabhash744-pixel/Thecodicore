@@ -2,17 +2,14 @@ package com.example.thecodicore;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.webkit.JavascriptInterface;
-import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -217,6 +214,7 @@ public class MainActivity extends AppCompatActivity {
                 triggerFileSave();
             }
         });
+        statusSave.setVisibility(View.GONE); // Hidden initially on Welcome Page
 
         // 7. Configure Live Shell Terminal
         findViewById(R.id.status_bar).setOnClickListener(new View.OnClickListener() {
@@ -258,7 +256,6 @@ public class MainActivity extends AppCompatActivity {
         for (String filename : defaults) {
             File f = new File(workspaceDir, filename);
             if (!f.exists()) {
-                // Read from mock folder inside assets and write to app local workspace
                 try {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("mock/" + filename)));
                     FileOutputStream fos = new FileOutputStream(f);
@@ -319,7 +316,6 @@ public class MainActivity extends AppCompatActivity {
             reader.close();
             fis.close();
 
-            // Escape file contents for JavaScript evaluation
             String escaped = sb.toString()
                 .replace("\\", "\\\\")
                 .replace("'", "\\'")
@@ -328,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
                 .replace("\n", "\\n");
 
             activeFile = file;
-            webView.evaluateJavascript("window.setEditorValue('" + escaped + "', '" + file.getName() + "');", null);
+            webView.evaluateJavascript("window.setEditorValue('" + escaped + "', '" + file.getAbsolutePath() + "');", null);
         } catch (Exception e) {
             Toast.makeText(this, "Failed to load file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
@@ -339,7 +335,14 @@ public class MainActivity extends AppCompatActivity {
             activeFileTextView.setTextColor(Color.parseColor("#858585"));
         }
         activeFileTextView = selected;
-        activeFileTextView.setTextColor(Color.parseColor("#3794ff")); // VS Code Highlight blue
+        activeFileTextView.setTextColor(Color.parseColor("#3794ff"));
+    }
+
+    private void clearFileHighlight() {
+        if (activeFileTextView != null) {
+            activeFileTextView.setTextColor(Color.parseColor("#858585"));
+            activeFileTextView = null;
+        }
     }
 
     private void triggerFileSave() {
@@ -347,7 +350,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "No active file open to save!", Toast.LENGTH_SHORT).show();
             return;
         }
-        // Evaluate JavaScript to fetch editor content and trigger Java callback
         webView.evaluateJavascript("window.Android.saveActiveFile(window.editor.getValue());", null);
     }
 
@@ -401,14 +403,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Launch a real, live Linux shell process in the background
     private void startInteractiveShell() {
         try {
             shellProcess = Runtime.getRuntime().exec("/system/bin/sh");
             shellOutputStream = shellProcess.getOutputStream();
             shellInputStream = shellProcess.getInputStream();
 
-            // Background thread to continuously read output and append to terminal view
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -421,8 +421,6 @@ public class MainActivity extends AppCompatActivity {
                                 @Override
                                 public void run() {
                                     terminalText.append(output);
-                                    
-                                    // Auto scroll
                                     terminalScroll.post(new Runnable() {
                                         @Override
                                         public void run() {
@@ -443,7 +441,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }).start();
 
-            // Initialize shell directory to workspace path
             String initCmd = "cd " + workspaceDir.getAbsolutePath() + " && clear\n";
             shellOutputStream.write(initCmd.getBytes(StandardCharsets.UTF_8));
             shellOutputStream.flush();
@@ -459,7 +456,6 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         try {
-            // Write commands to interactive shell
             shellOutputStream.write((cmd + "\n").getBytes(StandardCharsets.UTF_8));
             shellOutputStream.flush();
         } catch (Exception e) {
@@ -467,12 +463,34 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void populateRecentFilesListInWebView() {
+        File[] files = workspaceDir.listFiles();
+        if (files == null) return;
 
+        StringBuilder json = new StringBuilder("[");
+        boolean first = true;
+        for (File file : files) {
+            if (file.isDirectory()) continue;
+            if (!first) json.append(",");
+            json.append("{\"name\":\"").append(file.getName())
+                .append("\",\"path\":\"").append(file.getAbsolutePath().replace("\\", "\\\\"))
+                .append("\"}");
+            first = false;
+        }
+        json.append("]");
+
+        final String evalCmd = "window.populateRecentFiles('" + json.toString().replace("'", "\\'") + "');";
+        webView.post(new Runnable() {
+            @Override
+            public void run() {
+                webView.evaluateJavascript(evalCmd, null);
+            }
+        });
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Clean up live shell process
         if (shellProcess != null) {
             shellProcess.destroy();
         }
@@ -514,6 +532,147 @@ public class MainActivity extends AppCompatActivity {
                         } catch (Exception e) {
                             Toast.makeText(MainActivity.this, "Save failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void onEditorReady() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    populateRecentFilesListInWebView();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void onActiveFileChanged(final String path) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (path == null || path.isEmpty()) {
+                        activeFile = null;
+                        statusSave.setVisibility(View.GONE);
+                        clearFileHighlight();
+                    } else {
+                        activeFile = new File(path);
+                        statusSave.setVisibility(View.VISIBLE);
+                        
+                        // Find and highlight in the sidebar explorer tree
+                        for (int i = 0; i < explorerFileList.getChildCount(); i++) {
+                            View child = explorerFileList.getChildAt(i);
+                            if (child instanceof TextView) {
+                                TextView tv = (TextView) child;
+                                if (tv.getText().toString().contains(activeFile.getName())) {
+                                    highlightFileSelection(tv);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void onNewFileClicked() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    // Create a new file programmatically
+                    int index = 1;
+                    File newFile = new File(workspaceDir, "Untitled-" + index + ".java");
+                    while (newFile.exists()) {
+                        index++;
+                        newFile = new File(workspaceDir, "Untitled-" + index + ".java");
+                    }
+                    try {
+                        FileOutputStream fos = new FileOutputStream(newFile);
+                        fos.write("// Write your code here...\n".getBytes(StandardCharsets.UTF_8));
+                        fos.close();
+                        
+                        loadWorkspaceFiles();
+                        populateRecentFilesListInWebView();
+                        loadFileIntoEditor(newFile);
+                        
+                        Toast.makeText(MainActivity.this, "Created " + newFile.getName(), Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "Creation failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void onOpenFileClicked() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    // Make the Explorer side panel visible and highlight Explorer tab
+                    sidebarPanel.setVisibility(View.VISIBLE);
+                    sidebarTitle.setText("EXPLORER");
+                    
+                    contentExplorer.setVisibility(View.VISIBLE);
+                    contentSearch.setVisibility(View.GONE);
+                    contentSourceControl.setVisibility(View.GONE);
+                    contentDebug.setVisibility(View.GONE);
+                    contentExtensions.setVisibility(View.GONE);
+                    contentAccount.setVisibility(View.GONE);
+                    contentSettings.setVisibility(View.GONE);
+
+                    iconExplorer.setBackgroundColor(Color.parseColor("#1e1e1e"));
+                    activeTabId = R.id.icon_explorer;
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void openRecentFile(final String path) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    File file = new File(path);
+                    if (file.exists()) {
+                        loadFileIntoEditor(file);
+                        
+                        // Set sidebar highlights
+                        for (int i = 0; i < explorerFileList.getChildCount(); i++) {
+                            View child = explorerFileList.getChildAt(i);
+                            if (child instanceof TextView) {
+                                TextView tv = (TextView) child;
+                                if (tv.getText().toString().contains(file.getName())) {
+                                    highlightFileSelection(tv);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void onWalkthroughClicked(final String type) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (type.equals("theme")) {
+                        // Open Settings panel and show a Toast guide
+                        sidebarPanel.setVisibility(View.VISIBLE);
+                        sidebarTitle.setText("SETTINGS");
+                        
+                        contentExplorer.setVisibility(View.GONE);
+                        contentSettings.setVisibility(View.VISIBLE);
+
+                        iconExplorer.setBackgroundColor(Color.TRANSPARENT);
+                        iconSettings.setBackgroundColor(Color.parseColor("#1e1e1e"));
+                        activeTabId = R.id.icon_settings;
+
+                        Toast.makeText(MainActivity.this, "Use the 'Editor Theme' buttons to switch theme styles!", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(MainActivity.this, "VS Code Mobile edition walkthrough: Click status bar to toggle terminal, Ctrl+S to save files, and sidebar to explore!", Toast.LENGTH_LONG).show();
                     }
                 }
             });
