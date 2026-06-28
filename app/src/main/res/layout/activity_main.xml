@@ -33,16 +33,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="File   Edit   Selection   View   Go   Run   Terminal   Help"
-            android:textColor="@color/vscode_text_secondary"
-            android:textSize="12sp"
-            android:layout_marginEnd="20dp" />
-
-        <!-- Mock Window Controls -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" ⚊   🗖   ✕ "
+            android:text="File      Edit      Selection      View      Go      Run      Terminal      Help"
             android:textColor="@color/vscode_text_secondary"
             android:textSize="14sp" />
     </LinearLayout>
