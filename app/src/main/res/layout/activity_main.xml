@@ -136,22 +136,22 @@
                 android:layout_weight="1" />
 
             <!-- Profile Icon -->
-            <TextView
+            <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:text="👤"
-                android:gravity="center"
-                android:textSize="20sp"
-                android:textColor="@color/vscode_text_secondary" />
+                android:src="@drawable/ic_account"
+                android:scaleType="fitCenter"
+                android:padding="12dp"
+                android:contentDescription="Profile" />
 
             <!-- Settings Icon -->
-            <TextView
+            <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:text="⚙"
-                android:gravity="center"
-                android:textSize="20sp"
-                android:textColor="@color/vscode_text_secondary" />
+                android:src="@drawable/ic_settings"
+                android:scaleType="fitCenter"
+                android:padding="12dp"
+                android:contentDescription="Settings" />
         </LinearLayout>
 
         <!-- Vertical Divider between Activity Bar and Main Content -->
