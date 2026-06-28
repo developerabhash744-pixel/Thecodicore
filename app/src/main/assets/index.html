@@ -32,10 +32,17 @@
             border-bottom: 1px solid #2d2d2d;
             align-items: flex-end;
             padding-left: 10px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        /* Hide scrollbar for Tab Bar */
+        #tab-bar::-webkit-scrollbar {
+            display: none;
         }
 
         .tab {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             height: 30px;
             padding: 0 16px;
@@ -195,7 +202,7 @@
             margin: 0;
         }
 
-        /* 4. Command Palette Overlay Overlay styling */
+        /* 4. Command Palette Overlay styling */
         #command-palette {
             display: none;
             position: absolute;
@@ -261,10 +268,8 @@
             <div id="tab-welcome" class="tab active" onclick="showWelcome()">
                 <span>Welcome</span>
             </div>
-            <div id="tab-editor" class="tab" style="display: none;" onclick="showEditorView()">
-                <span id="tab-filename">File.java</span>
-                <span class="tab-close" onclick="closeActiveFile(event)">✕</span>
-            </div>
+            <!-- Tabs are injected dynamically here -->
+            <div id="dynamic-tabs-container" style="display: inline-flex;"></div>
         </div>
 
         <!-- View Container -->
@@ -335,6 +340,7 @@
     <script src="vs/loader.js"></script>
     <script>
         var activeFilePath = "";
+        var openTabs = []; // Collection of open file tabs: {path: '...', name: '...'}
 
         // Standard VS Code Command Palette Command Definition List
         var commands = [
@@ -382,13 +388,67 @@
             }
         });
 
+        // Dynamic Tab Bar Rendering
+        function renderTabs() {
+            var container = document.getElementById('dynamic-tabs-container');
+            container.innerHTML = "";
+            
+            openTabs.forEach(function (tab) {
+                var tabDiv = document.createElement('div');
+                tabDiv.className = "tab" + (tab.path === activeFilePath ? " active" : "");
+                tabDiv.onclick = function () {
+                    if (window.Android && window.Android.openRecentFile) {
+                        window.Android.openRecentFile(tab.path);
+                    }
+                };
+                
+                var label = document.createElement('span');
+                label.innerText = tab.name;
+                
+                var closeBtn = document.createElement('span');
+                closeBtn.className = "tab-close";
+                closeBtn.innerText = "✕";
+                closeBtn.onclick = function (e) {
+                    e.stopPropagation();
+                    closeTab(tab.path);
+                };
+                
+                tabDiv.appendChild(label);
+                tabDiv.appendChild(closeBtn);
+                container.appendChild(tabDiv);
+            });
+        }
+
+        function closeTab(path) {
+            // Remove from openTabs collection
+            openTabs = openTabs.filter(function (tab) {
+                return tab.path !== path;
+            });
+            
+            if (path === activeFilePath) {
+                if (openTabs.length > 0) {
+                    // Switch to the first available tab
+                    var nextTab = openTabs[0];
+                    if (window.Android && window.Android.openRecentFile) {
+                        window.Android.openRecentFile(nextTab.path);
+                    }
+                } else {
+                    activeFilePath = "";
+                    showWelcome();
+                }
+            } else {
+                renderTabs();
+            }
+        }
+
         // Toggle Views
         function showWelcome() {
             document.getElementById('welcome-view').style.display = 'flex';
             document.getElementById('editor-container').style.display = 'none';
             
             document.getElementById('tab-welcome').classList.add('active');
-            document.getElementById('tab-editor').classList.remove('active');
+            activeFilePath = "";
+            renderTabs();
 
             if (window.Android && window.Android.onActiveFileChanged) {
                 window.Android.onActiveFileChanged(""); // Let Android know no file is active
@@ -398,9 +458,7 @@
         function showEditorView() {
             document.getElementById('welcome-view').style.display = 'none';
             document.getElementById('editor-container').style.display = 'block';
-            
             document.getElementById('tab-welcome').classList.remove('active');
-            document.getElementById('tab-editor').classList.add('active');
 
             if (window.editor) {
                 window.editor.layout();
@@ -409,14 +467,6 @@
             if (window.Android && window.Android.onActiveFileChanged) {
                 window.Android.onActiveFileChanged(activeFilePath);
             }
-        }
-
-        function closeActiveFile(event) {
-            if (event) event.stopPropagation(); // Avoid triggering tab click
-            
-            document.getElementById('tab-editor').style.display = 'none';
-            activeFilePath = "";
-            showWelcome();
         }
 
         // Global APIs invoked by Android Java code
@@ -437,11 +487,16 @@
             var model = window.editor.getModel();
             monaco.editor.setModelLanguage(model, lang);
 
-            // Update Tab Indicator
+            // Add file to tabs collection if not already open
             var filename = filepath.substring(filepath.lastIndexOf('/') + 1);
-            document.getElementById('tab-filename').innerText = filename;
-            document.getElementById('tab-editor').style.display = 'flex';
+            var tabExists = openTabs.some(function (tab) {
+                return tab.path === filepath;
+            });
+            if (!tabExists) {
+                openTabs.push({ path: filepath, name: filename });
+            }
             
+            renderTabs();
             showEditorView();
 
             if (window.Android && window.Android.onLanguageChanged) {

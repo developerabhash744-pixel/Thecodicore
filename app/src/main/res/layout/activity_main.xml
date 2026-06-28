@@ -364,7 +364,7 @@
                         android:layout_marginTop="12dp" />
                 </LinearLayout>
 
-                <!-- Debug Content -->
+                <!-- Debug & AI Content -->
                 <LinearLayout
                     android:id="@+id/content_debug"
                     android:layout_width="match_parent"
@@ -372,13 +372,84 @@
                     android:orientation="vertical"
                     android:visibility="gone">
 
-                    <Button
+                    <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Run and Debug"
-                        android:textSize="12sp"
+                        android:text="RUN &amp; DEBUG"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- Run compiler button -->
+                    <Button
+                        android:id="@+id/btn_run_code"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:text="▶ Run Code"
+                        android:textSize="11sp"
                         android:backgroundTint="@color/vscode_status_bar"
                         android:textColor="@android:color/white" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="AI COPILOT CHAT"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- AI chat output display -->
+                    <ScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@color/vscode_card_bg"
+                        android:padding="6dp"
+                        android:layout_marginBottom="6dp"
+                        android:fillViewport="true">
+                        
+                        <TextView
+                            android:id="@+id/ai_chat_output"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Copilot: Hello! Ask me to generate templates or answer coding questions.\n"
+                            android:textColor="@color/vscode_text_secondary"
+                            android:textSize="11sp" />
+                    </ScrollView>
+
+                    <!-- AI chat input message -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <EditText
+                            android:id="@+id/ai_chat_input"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:hint="Ask Copilot..."
+                            android:textColorHint="@color/vscode_text_secondary"
+                            android:textColor="@color/vscode_text_primary"
+                            android:background="@color/vscode_card_bg"
+                            android:padding="6dp"
+                            android:textSize="11sp"
+                            android:maxLines="1"
+                            android:inputType="text" />
+
+                        <Button
+                            android:id="@+id/btn_ai_send"
+                            android:layout_width="50dp"
+                            android:layout_height="36dp"
+                            android:text="Send"
+                            android:textSize="9sp"
+                            android:layout_marginStart="4dp"
+                            android:backgroundTint="@color/vscode_status_bar"
+                            android:textColor="@android:color/white" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <!-- Extensions Content -->
@@ -392,25 +463,78 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="RECOMMENDED"
-                        android:textColor="@color/vscode_text_secondary"
-                        android:textSize="11sp" />
+                        android:text="EXTENSIONS MARKETPLACE"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp" />
 
-                    <TextView
+                    <!-- Extension 1 -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="• Kotlin Support (v1.9)"
-                        android:textColor="@color/vscode_text_primary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="8dp" />
+                        android:orientation="vertical"
+                        android:padding="8dp"
+                        android:background="@color/vscode_card_bg"
+                        android:layout_marginBottom="10dp">
+                        
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Java Boilerplate Expansion"
+                            android:textColor="@color/vscode_text_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Generate rich structures of classes &amp; loops instantly."
+                            android:textColor="@color/vscode_text_secondary"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp" />
+                        <Button
+                            android:id="@+id/btn_ext_java"
+                            android:layout_width="wrap_content"
+                            android:layout_height="30dp"
+                            android:text="Install"
+                            android:textSize="9sp"
+                            android:layout_marginTop="6dp"
+                            android:backgroundTint="@color/vscode_status_bar"
+                            android:textColor="@android:color/white" />
+                    </LinearLayout>
 
-                    <TextView
+                    <!-- Extension 2 -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="• Java Debugger (v0.5)"
-                        android:textColor="@color/vscode_text_primary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="4dp" />
+                        android:orientation="vertical"
+                        android:padding="8dp"
+                        android:background="@color/vscode_card_bg">
+                        
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Web Boilerplate Expand"
+                            android:textColor="@color/vscode_text_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Enable automatic HTML layouts and script inclusions."
+                            android:textColor="@color/vscode_text_secondary"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp" />
+                        <Button
+                            android:id="@+id/btn_ext_html"
+                            android:layout_width="wrap_content"
+                            android:layout_height="30dp"
+                            android:text="Install"
+                            android:textSize="9sp"
+                            android:layout_marginTop="6dp"
+                            android:backgroundTint="@color/vscode_status_bar"
+                            android:textColor="@android:color/white" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <!-- Account Content -->
@@ -424,17 +548,44 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Signed in as:"
+                        android:text="GITHUB PROFILE"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Signed in as username:"
                         android:textColor="@color/vscode_text_secondary"
                         android:textSize="11sp" />
 
                     <TextView
+                        android:id="@+id/account_username"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="developerabhash744-pixel"
                         android:textColor="@color/vscode_text_primary"
                         android:textSize="12sp"
                         android:textStyle="bold"
+                        android:layout_marginTop="4dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Commit email:"
+                        android:textColor="@color/vscode_text_secondary"
+                        android:layout_marginTop="12dp"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/account_email"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="developerabhash744-pixel@users.noreply.github.com"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="11sp"
                         android:layout_marginTop="4dp" />
                 </LinearLayout>
 

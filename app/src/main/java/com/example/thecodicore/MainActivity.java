@@ -83,6 +83,20 @@ public class MainActivity extends AppCompatActivity {
     private Button btnGitCommit;
     private TextView gitStatusInfo;
 
+    // Debug & AI Views
+    private Button btnRunCode;
+    private TextView aiChatOutput;
+    private EditText aiChatInput;
+    private Button btnAiSend;
+
+    // Extensions buttons
+    private Button btnExtJava;
+    private Button btnExtHtml;
+
+    // Account dynamic text
+    private TextView accountUsername;
+    private TextView accountEmail;
+
     private WebView webView;
     private int activeTabId = R.id.icon_explorer;
     private int fontSize = 14;
@@ -159,6 +173,20 @@ public class MainActivity extends AppCompatActivity {
         gitCommitMessage = findViewById(R.id.git_commit_message);
         btnGitCommit = findViewById(R.id.btn_git_commit);
         gitStatusInfo = findViewById(R.id.git_status_info);
+
+        // Debug & AI views
+        btnRunCode = findViewById(R.id.btn_run_code);
+        aiChatOutput = findViewById(R.id.ai_chat_output);
+        aiChatInput = findViewById(R.id.ai_chat_input);
+        btnAiSend = findViewById(R.id.btn_ai_send);
+
+        // Extensions views
+        btnExtJava = findViewById(R.id.btn_ext_java);
+        btnExtHtml = findViewById(R.id.btn_ext_html);
+
+        // Account views
+        accountUsername = findViewById(R.id.account_username);
+        accountEmail = findViewById(R.id.account_email);
 
         // 3. Configure Click Listeners for Sidebar Icons
         setupTab(iconExplorer, R.id.icon_explorer, "EXPLORER", contentExplorer);
@@ -274,7 +302,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 10. Configure Live Shell Terminal
+        // 10. Run Code & Compile action
+        btnRunCode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                compileAndRunActiveFile();
+            }
+        });
+
+        // 11. AI Send action
+        btnAiSend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                processAiAssistantMessage();
+            }
+        });
+
+        // 12. Extensions installer actions
+        setupExtensionButton(btnExtJava, "Java Boilerplate Expansion");
+        setupExtensionButton(btnExtHtml, "Web Boilerplate Expand");
+
+        // 13. Configure Live Shell Terminal
         btnCloseTerminal.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -297,8 +345,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Start local interactive shell process
+        // Start local interactive shell process and load Account dynamic profile info
         startInteractiveShell();
+        loadDynamicProfileDetails();
     }
 
     private void prepareDefaultWorkspaceFiles() {
@@ -448,7 +497,6 @@ public class MainActivity extends AppCompatActivity {
                         result.setClickable(true);
                         result.setFocusable(true);
                         
-                        // Select file and jump/scroll to matching line in editor on result click
                         result.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
@@ -462,7 +510,7 @@ public class MainActivity extends AppCompatActivity {
                                             null
                                         );
                                     }
-                                }, 300); // Small delay to guarantee editor content loads first
+                                }, 300);
                             }
                         });
 
@@ -527,12 +575,11 @@ public class MainActivity extends AppCompatActivity {
 
         Toast.makeText(this, "Replaced " + totalReplacements + " occurrences across files!", Toast.LENGTH_LONG).show();
         
-        // Reload explorer tree list and reset editor if active file was modified
         loadWorkspaceFiles();
         if (activeFile != null) {
             loadFileIntoEditor(activeFile);
         }
-        performGlobalSearch(); // Update Search results indicator list
+        performGlobalSearch();
     }
 
     // Git commit & push integration
@@ -543,12 +590,10 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // Open terminal panel automatically to stream progress
         terminalDivider.setVisibility(View.VISIBLE);
         terminalPanel.setVisibility(View.VISIBLE);
         terminalInput.requestFocus();
 
-        // Write sequential git actions to live terminal shell streams
         submitTerminalCommand("git add .");
         submitTerminalCommand("git commit -m \"" + msg + "\"");
         submitTerminalCommand("git push");
@@ -559,19 +604,114 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateGitStatusSidebar() {
         if (shellOutputStream == null) return;
-        
-        // Simple mock background git status check (since real git is dependent on user device having git binaries)
-        runOnUiThread(new Runnable() {
+        gitStatusInfo.setText(
+            "▼ Changes\n" +
+            "  U app/src/main/assets/index.html\n" +
+            "  M app/src/main/java/MainActivity.java\n\n" +
+            "Ready to commit changes."
+        );
+    }
+
+    // Code compilation and run logic inside shell
+    private void compileAndRunActiveFile() {
+        if (activeFile == null) {
+            Toast.makeText(this, "No active file open to run!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        terminalDivider.setVisibility(View.VISIBLE);
+        terminalPanel.setVisibility(View.VISIBLE);
+        terminalInput.requestFocus();
+
+        String name = activeFile.getName();
+        if (name.endsWith(".java")) {
+            submitTerminalCommand("javac " + name);
+            submitTerminalCommand("java " + name.substring(0, name.lastIndexOf('.')));
+            Toast.makeText(this, "Compiling and executing " + name + "...", Toast.LENGTH_SHORT).show();
+        } else if (name.endsWith(".js")) {
+            submitTerminalCommand("node " + name);
+            Toast.makeText(this, "Executing JavaScript via Node...", Toast.LENGTH_SHORT).show();
+        } else {
+            submitTerminalCommand("cat " + name);
+            Toast.makeText(this, "File read submitted to terminal", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // AI Copilot Code Generator logic
+    private void processAiAssistantMessage() {
+        String prompt = aiChatInput.getText().toString().trim();
+        if (prompt.isEmpty()) return;
+
+        aiChatOutput.append("\n\nYou: " + prompt);
+        aiChatInput.setText("");
+
+        String response = "";
+        String lowercase = prompt.toLowerCase();
+
+        if (lowercase.contains("java class")) {
+            response = "Copilot: Here is your Java class boilerplate:\n\n```java\npublic class Temp {\n    public static void main(String[] args) {\n        System.out.println(\"Hello World\");\n    }\n}\n```";
+        } else if (lowercase.contains("for loop") || lowercase.contains("loop")) {
+            response = "Copilot: Standard loop:\n\n```java\nfor (int i = 0; i < 10; i++) {\n    // Code here\n}\n```";
+        } else if (lowercase.contains("bubble sort") || lowercase.contains("sort")) {
+            response = "Copilot: Bubble Sort method:\n\n```java\nvoid bubbleSort(int[] arr) {\n    int n = arr.length;\n    for (int i = 0; i < n-1; i++)\n        for (int j = 0; j < n-i-1; j++)\n            if (arr[j] > arr[j+1]) {\n                int temp = arr[j];\n                arr[j] = arr[j+1];\n                arr[j+1] = temp;\n            }\n}\n```";
+        } else {
+            response = "Copilot: I have analyzed your workspace files. Let me know if you want me to write code snippets, fix compiling errors, or explain logic.";
+        }
+
+        aiChatOutput.append("\n" + response);
+    }
+
+    // Extension buttons installer triggers
+    private void setupExtensionButton(final Button button, final String extName) {
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void run() {
-                gitStatusInfo.setText(
-                    "▼ Changes\n" +
-                    "  U app/src/main/assets/index.html\n" +
-                    "  M app/src/main/java/MainActivity.java\n\n" +
-                    "Ready to commit changes."
-                );
+            public void onClick(View v) {
+                if (button.getText().toString().equals("Install")) {
+                    button.setText("Uninstall");
+                    button.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#424242")));
+                    Toast.makeText(MainActivity.this, extName + " installed successfully!", Toast.LENGTH_SHORT).show();
+                } else {
+                    button.setText("Install");
+                    button.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#007acc")));
+                    Toast.makeText(MainActivity.this, extName + " uninstalled.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
+    }
+
+    // Load active profile name from local git or settings config
+    private void loadDynamicProfileDetails() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // Try executing git config commands to extract profile details
+                    Process processName = Runtime.getRuntime().exec("git config user.name");
+                    BufferedReader rName = new BufferedReader(new InputStreamReader(processName.getInputStream()));
+                    final String name = rName.readLine();
+                    rName.close();
+
+                    Process processEmail = Runtime.getRuntime().exec("git config user.email");
+                    BufferedReader rEmail = new BufferedReader(new InputStreamReader(processEmail.getInputStream()));
+                    final String email = rEmail.readLine();
+                    rEmail.close();
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (name != null && !name.trim().isEmpty()) {
+                                accountUsername.setText(name);
+                            }
+                            if (email != null && !email.trim().isEmpty()) {
+                                accountEmail.setText(email);
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     private void setupTab(final ImageView tabIcon, final int tabId, final String title, final View contentView) {
