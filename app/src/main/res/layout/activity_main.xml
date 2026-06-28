@@ -169,13 +169,30 @@
             android:background="@color/vscode_bg"
             android:padding="20dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="Editor Content"
-                android:textColor="@color/vscode_text_secondary"
-                android:textSize="16sp" />
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:src="@drawable/logo"
+                    android:scaleType="fitCenter"
+                    android:alpha="0.15"
+                    android:contentDescription="Watermark Logo" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Thecodicore"
+                    android:textColor="@color/vscode_text_secondary"
+                    android:textSize="18sp"
+                    android:layout_marginTop="12dp"
+                    android:alpha="0.25" />
+            </LinearLayout>
         </FrameLayout>
     </LinearLayout>
 
