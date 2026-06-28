@@ -84,50 +84,50 @@
             android:paddingVertical="10dp">
 
             <!-- Explorer Icon -->
-            <TextView
+            <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:text="📁"
-                android:gravity="center"
-                android:textSize="20sp"
-                android:textColor="@color/vscode_text_primary"
-                android:background="@color/vscode_bg" />
+                android:src="@drawable/ic_explorer"
+                android:scaleType="fitCenter"
+                android:padding="12dp"
+                android:background="@color/vscode_bg"
+                android:contentDescription="Explorer" />
 
             <!-- Search Icon -->
-            <TextView
+            <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:text="🔍"
-                android:gravity="center"
-                android:textSize="20sp"
-                android:textColor="@color/vscode_text_secondary" />
+                android:src="@drawable/ic_search"
+                android:scaleType="fitCenter"
+                android:padding="12dp"
+                android:contentDescription="Search" />
 
             <!-- Source Control Icon -->
-            <TextView
+            <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:text="🌿"
-                android:gravity="center"
-                android:textSize="20sp"
-                android:textColor="@color/vscode_text_secondary" />
+                android:src="@drawable/ic_source_control"
+                android:scaleType="fitCenter"
+                android:padding="12dp"
+                android:contentDescription="Source Control" />
 
             <!-- Run/Debug Icon -->
-            <TextView
+            <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:text="▶"
-                android:gravity="center"
-                android:textSize="20sp"
-                android:textColor="@color/vscode_text_secondary" />
+                android:src="@drawable/ic_debug"
+                android:scaleType="fitCenter"
+                android:padding="12dp"
+                android:contentDescription="Run and Debug" />
 
             <!-- Extensions Icon -->
-            <TextView
+            <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:text="⊞"
-                android:gravity="center"
-                android:textSize="20sp"
-                android:textColor="@color/vscode_text_secondary" />
+                android:src="@drawable/ic_extensions"
+                android:scaleType="fitCenter"
+                android:padding="12dp"
+                android:contentDescription="Extensions" />
 
             <!-- Spacer to push settings to the bottom -->
             <View
