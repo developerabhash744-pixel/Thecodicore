@@ -40,7 +40,56 @@
                 fontSize: 14,
                 minimap: { enabled: false }
             });
+
+            // Listen to cursor position changes and notify native Android Status Bar
+            window.editor.onDidChangeCursorPosition(function (e) {
+                if (window.Android && window.Android.onCursorChanged) {
+                    window.Android.onCursorChanged(e.position.lineNumber, e.position.column);
+                }
+            });
         });
+
+        // Global functions for Android WebView Java code to invoke
+        window.setEditorValue = function (value, filepath) {
+            if (!window.editor) return;
+            window.editor.setValue(value);
+            
+            // Detect language based on extension
+            var lang = 'text';
+            if (filepath.endsWith('.java')) lang = 'java';
+            else if (filepath.endsWith('.gradle')) lang = 'gradle';
+            else if (filepath.endsWith('.xml')) lang = 'xml';
+            else if (filepath.endsWith('.html')) lang = 'html';
+            else if (filepath.endsWith('.js')) lang = 'javascript';
+            
+            var model = window.editor.getModel();
+            monaco.editor.setModelLanguage(model, lang);
+
+            // Notify Android of the active language update
+            if (window.Android && window.Android.onLanguageChanged) {
+                window.Android.onLanguageChanged(lang.toUpperCase());
+            }
+        };
+
+        window.setTheme = function (themeName) {
+            if (themeName === 'Light') {
+                monaco.editor.setTheme('vs');
+            } else if (themeName === 'High Contrast') {
+                monaco.editor.setTheme('hc-black');
+            } else {
+                monaco.editor.setTheme('vs-dark');
+            }
+        };
+
+        window.updateFontSize = function (size) {
+            if (!window.editor) return;
+            window.editor.updateOptions({ fontSize: parseInt(size) });
+        };
+
+        window.toggleMinimap = function (enabled) {
+            if (!window.editor) return;
+            window.editor.updateOptions({ minimap: { enabled: enabled } });
+        };
     </script>
 </body>
 </html>
