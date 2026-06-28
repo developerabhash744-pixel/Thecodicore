@@ -72,6 +72,7 @@
 
             <!-- Explorer Icon -->
             <ImageView
+                android:id="@+id/icon_explorer"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:src="@drawable/ic_explorer"
@@ -82,6 +83,7 @@
 
             <!-- Search Icon -->
             <ImageView
+                android:id="@+id/icon_search"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:src="@drawable/ic_search"
@@ -91,6 +93,7 @@
 
             <!-- Source Control Icon -->
             <ImageView
+                android:id="@+id/icon_source_control"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:src="@drawable/ic_source_control"
@@ -100,6 +103,7 @@
 
             <!-- Run/Debug Icon -->
             <ImageView
+                android:id="@+id/icon_debug"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:src="@drawable/ic_debug"
@@ -109,6 +113,7 @@
 
             <!-- Extensions Icon -->
             <ImageView
+                android:id="@+id/icon_extensions"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:src="@drawable/ic_extensions"
@@ -124,6 +129,7 @@
 
             <!-- Profile Icon -->
             <ImageView
+                android:id="@+id/icon_account"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:src="@drawable/ic_account"
@@ -133,6 +139,7 @@
 
             <!-- Settings Icon -->
             <ImageView
+                android:id="@+id/icon_settings"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:src="@drawable/ic_settings"
@@ -141,7 +148,232 @@
                 android:contentDescription="Settings" />
         </LinearLayout>
 
-        <!-- Vertical Divider between Activity Bar and Main Content -->
+        <!-- Collapsible Side Panel (VS Code style) -->
+        <LinearLayout
+            android:id="@+id/sidebar_panel"
+            android:layout_width="200dp"
+            android:layout_height="match_parent"
+            android:background="@color/vscode_sidebar"
+            android:orientation="vertical"
+            android:visibility="visible"
+            android:padding="12dp">
+
+            <!-- Sidebar Title -->
+            <TextView
+                android:id="@+id/sidebar_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="EXPLORER"
+                android:textColor="@color/vscode_text_primary"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textAllCaps="true"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Sidebar Content Container -->
+            <FrameLayout
+                android:id="@+id/sidebar_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <!-- Explorer Content (Default) -->
+                <LinearLayout
+                    android:id="@+id/content_explorer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="visible">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="▼ THECODICORE"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="6dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="  📁 app"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="12sp"
+                        android:paddingVertical="4dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="    📁 src"
+                        android:textColor="@color/vscode_text_secondary"
+                        android:textSize="12sp"
+                        android:paddingVertical="4dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="      📄 MainActivity.java"
+                        android:textColor="@color/vscode_link"
+                        android:textSize="12sp"
+                        android:paddingVertical="4dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="  📄 build.gradle"
+                        android:textColor="@color/vscode_text_secondary"
+                        android:textSize="12sp"
+                        android:paddingVertical="4dp" />
+                </LinearLayout>
+
+                <!-- Search Content -->
+                <LinearLayout
+                    android:id="@+id/content_search"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <EditText
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Search"
+                        android:textColorHint="@color/vscode_text_secondary"
+                        android:textColor="@color/vscode_text_primary"
+                        android:background="@color/vscode_card_bg"
+                        android:padding="6dp"
+                        android:textSize="12sp"
+                        android:maxLines="1" />
+                </LinearLayout>
+
+                <!-- Source Control Content -->
+                <LinearLayout
+                    android:id="@+id/content_source_control"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Source Control: Git"
+                        android:textColor="@color/vscode_text_secondary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="✔ MainActivity.java [M]"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="12sp"
+                        android:layout_marginTop="8dp" />
+                </LinearLayout>
+
+                <!-- Debug Content -->
+                <LinearLayout
+                    android:id="@+id/content_debug"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <Button
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Run and Debug"
+                        android:textSize="12sp"
+                        android:backgroundTint="@color/vscode_status_bar"
+                        android:textColor="@android:color/white" />
+                </LinearLayout>
+
+                <!-- Extensions Content -->
+                <LinearLayout
+                    android:id="@+id/content_extensions"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="RECOMMENDED"
+                        android:textColor="@color/vscode_text_secondary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="• Kotlin Support (v1.9)"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="12sp"
+                        android:layout_marginTop="8dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="• Java Debugger (v0.5)"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="12sp"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+                <!-- Account Content -->
+                <LinearLayout
+                    android:id="@+id/content_account"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Signed in as:"
+                        android:textColor="@color/vscode_text_secondary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="developerabhash744-pixel"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+                <!-- Settings Content -->
+                <LinearLayout
+                    android:id="@+id/content_settings"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Settings"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <CheckBox
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Enable Autocomplete"
+                        android:textColor="@color/vscode_text_secondary"
+                        android:textSize="12sp"
+                        android:layout_marginTop="8dp" />
+                </LinearLayout>
+
+            </FrameLayout>
+
+        </LinearLayout>
+
+        <!-- Vertical Divider between Sidebar Panel and Main Content -->
         <View
             android:layout_width="1dp"
             android:layout_height="match_parent"
