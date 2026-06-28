@@ -2,10 +2,13 @@ package com.example.thecodicore;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -17,9 +20,17 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -47,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
     // Status bar views
     private TextView statusCursor;
     private TextView statusLanguage;
+    private ImageView statusSave;
 
     // Terminal views
     private View terminalDivider;
@@ -56,13 +68,22 @@ public class MainActivity extends AppCompatActivity {
     private ScrollView terminalScroll;
     private TextView btnCloseTerminal;
 
-    // Explorer file text views
-    private TextView fileMainActivity;
-    private TextView fileBuildGradle;
+    // Explorer dynamic file list
+    private LinearLayout explorerFileList;
 
     private WebView webView;
     private int activeTabId = R.id.icon_explorer;
     private int fontSize = 14;
+
+    // Active file system references
+    private File workspaceDir;
+    private File activeFile;
+    private TextView activeFileTextView;
+
+    // Live terminal process
+    private Process shellProcess;
+    private OutputStream shellOutputStream;
+    private InputStream shellInputStream;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
 
         statusCursor = findViewById(R.id.status_cursor);
         statusLanguage = findViewById(R.id.status_language);
+        statusSave = findViewById(R.id.status_save);
 
         terminalDivider = findViewById(R.id.terminal_divider);
         terminalPanel = findViewById(R.id.terminal_panel);
@@ -112,8 +134,7 @@ public class MainActivity extends AppCompatActivity {
         terminalScroll = findViewById(R.id.terminal_scroll);
         btnCloseTerminal = findViewById(R.id.btn_close_terminal);
 
-        fileMainActivity = findViewById(R.id.file_main_activity);
-        fileBuildGradle = findViewById(R.id.file_build_gradle);
+        explorerFileList = findViewById(R.id.explorer_file_list);
 
         // 3. Configure Click Listeners for Sidebar Icons
         setupTab(iconExplorer, R.id.icon_explorer, "EXPLORER", contentExplorer);
@@ -124,22 +145,10 @@ public class MainActivity extends AppCompatActivity {
         setupTab(iconAccount, R.id.icon_account, "ACCOUNT", contentAccount);
         setupTab(iconSettings, R.id.icon_settings, "SETTINGS", contentSettings);
 
-        // 4. Configure File Explorer Loading
-        fileMainActivity.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                loadFileIntoEditor("MainActivity.java");
-                highlightFileSelection(fileMainActivity);
-            }
-        });
-
-        fileBuildGradle.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                loadFileIntoEditor("build.gradle");
-                highlightFileSelection(fileBuildGradle);
-            }
-        });
+        // 4. Initialize Local Workspace Files
+        workspaceDir = getFilesDir(); // app-private internal storage workspace
+        prepareDefaultWorkspaceFiles();
+        loadWorkspaceFiles();
 
         // 5. Configure Settings panel preferences
         CheckBox settingMinimap = findViewById(R.id.setting_minimap);
@@ -201,7 +210,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 6. Configure Collapsible Terminal Panel
+        // 6. Configure Status Bar Save Action
+        statusSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                triggerFileSave();
+            }
+        });
+
+        // 7. Configure Live Shell Terminal
         findViewById(R.id.status_bar).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -217,20 +234,121 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Terminal commands processor
+        // Terminal input submit action listener
         terminalInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_SEND || 
                     (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
-                    String cmd = terminalInput.getText().toString().trim();
-                    processTerminalCommand(cmd);
+                    String cmd = terminalInput.getText().toString();
+                    submitTerminalCommand(cmd);
                     terminalInput.setText("");
                     return true;
                 }
                 return false;
             }
         });
+
+        // Start local interactive shell process
+        startInteractiveShell();
+    }
+
+    private void prepareDefaultWorkspaceFiles() {
+        String[] defaults = {"MainActivity.java", "build.gradle", "AndroidManifest.xml"};
+        for (String filename : defaults) {
+            File f = new File(workspaceDir, filename);
+            if (!f.exists()) {
+                // Read from mock folder inside assets and write to app local workspace
+                try {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("mock/" + filename)));
+                    FileOutputStream fos = new FileOutputStream(f);
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        fos.write((line + "\n").getBytes(StandardCharsets.UTF_8));
+                    }
+                    reader.close();
+                    fos.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private void loadWorkspaceFiles() {
+        explorerFileList.removeAllViews();
+        File[] files = workspaceDir.listFiles();
+        if (files == null) return;
+
+        for (final File file : files) {
+            if (file.isDirectory()) continue;
+
+            final TextView tv = new TextView(this);
+            tv.setText("  📄 " + file.getName());
+            tv.setTextColor(Color.parseColor("#858585"));
+            tv.setTextSize(12);
+            tv.setPadding(0, 16, 0, 16);
+            tv.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            tv.setClickable(true);
+            tv.setFocusable(true);
+
+            tv.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    loadFileIntoEditor(file);
+                    highlightFileSelection(tv);
+                }
+            });
+
+            explorerFileList.addView(tv);
+        }
+    }
+
+    private void loadFileIntoEditor(File file) {
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+            reader.close();
+            fis.close();
+
+            // Escape file contents for JavaScript evaluation
+            String escaped = sb.toString()
+                .replace("\\", "\\\\")
+                .replace("'", "\\'")
+                .replace("\"", "\\\"")
+                .replace("\r", "")
+                .replace("\n", "\\n");
+
+            activeFile = file;
+            webView.evaluateJavascript("window.setEditorValue('" + escaped + "', '" + file.getName() + "');", null);
+        } catch (Exception e) {
+            Toast.makeText(this, "Failed to load file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void highlightFileSelection(TextView selected) {
+        if (activeFileTextView != null) {
+            activeFileTextView.setTextColor(Color.parseColor("#858585"));
+        }
+        activeFileTextView = selected;
+        activeFileTextView.setTextColor(Color.parseColor("#3794ff")); // VS Code Highlight blue
+    }
+
+    private void triggerFileSave() {
+        if (activeFile == null) {
+            Toast.makeText(this, "No active file open to save!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Evaluate JavaScript to fetch editor content and trigger Java callback
+        webView.evaluateJavascript("window.Android.saveActiveFile(window.editor.getValue());", null);
     }
 
     private void setupTab(final ImageView tabIcon, final int tabId, final String title, final View contentView) {
@@ -272,36 +390,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void loadFileIntoEditor(String filename) {
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("mock/" + filename)));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
-            }
-            reader.close();
-
-            // Escape content safely for JavaScript call
-            String escaped = sb.toString()
-                .replace("\\", "\\\\")
-                .replace("'", "\\'")
-                .replace("\"", "\\\"")
-                .replace("\r", "")
-                .replace("\n", "\\n");
-
-            webView.evaluateJavascript("window.setEditorValue('" + escaped + "', '" + filename + "');", null);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void highlightFileSelection(TextView selected) {
-        fileMainActivity.setTextColor(Color.parseColor("#858585"));
-        fileBuildGradle.setTextColor(Color.parseColor("#858585"));
-        selected.setTextColor(Color.parseColor("#3794ff")); // VS Code Link Highlight Color
-    }
-
     private void toggleTerminal() {
         if (terminalPanel.getVisibility() == View.VISIBLE) {
             terminalDivider.setVisibility(View.GONE);
@@ -313,55 +401,84 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void processTerminalCommand(String cmd) {
-        StringBuilder response = new StringBuilder();
-        response.append("sh-4.4$ ").append(cmd).append("\n");
+    // Launch a real, live Linux shell process in the background
+    private void startInteractiveShell() {
+        try {
+            shellProcess = Runtime.getRuntime().exec("/system/bin/sh");
+            shellOutputStream = shellProcess.getOutputStream();
+            shellInputStream = shellProcess.getInputStream();
 
-        if (cmd.equalsIgnoreCase("help")) {
-            response.append("Available commands:\n")
-                .append("  help          - Show this guide\n")
-                .append("  git status    - Check Git repository changes status\n")
-                .append("  java-run      - Compile and run active project\n")
-                .append("  clear         - Clear terminal screen\n");
-        } else if (cmd.equalsIgnoreCase("git status")) {
-            response.append("On branch main\n")
-                .append("Your branch is up to date with 'origin/main'.\n\n")
-                .append("Changes not staged for commit:\n")
-                .append("  (use \"git add <file>...\" to update what will be committed)\n")
-                .append("  (use \"git restore <file>...\" to discard changes)\n")
-                .append("\tmodified:   app/src/main/java/com/example/thecodicore/MainActivity.java\n\n")
-                .append("no changes added to commit (use \"git add\" and/or \"git commit -a\")\n");
-        } else if (cmd.equalsIgnoreCase("java-run")) {
-            response.append("$ ./gradlew assembleDebug\n")
-                .append("Starting a Gradle Daemon, 1 incompatible Daemon could not be reused...\n")
-                .append("> Task :app:compileDebugJavaWithJavac SUCCESS\n")
-                .append("> Task :app:processDebugResources SUCCESS\n")
-                .append("> Task :app:assembleDebug SUCCESS\n\n")
-                .append("BUILD SUCCESSFUL in 3s\n")
-                .append("Running MainActivity on simulator...\n")
-                .append("System.out.println(\"Hello, World!\");\n")
-                .append("Thecodicore Application started successfully!\n");
-        } else if (cmd.equalsIgnoreCase("clear")) {
-            terminalText.setText("sh-4.4$ ");
-            return;
-        } else if (cmd.isEmpty()) {
-            // Just append newline for empty return
-        } else {
-            response.append("sh: command not found: ").append(cmd).append("\n");
+            // Background thread to continuously read output and append to terminal view
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    byte[] buffer = new byte[2048];
+                    int read;
+                    try {
+                        while ((read = shellInputStream.read(buffer)) != -1) {
+                            final String output = new String(buffer, 0, read, StandardCharsets.UTF_8);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    terminalText.append(output);
+                                    
+                                    // Auto scroll
+                                    terminalScroll.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            terminalScroll.fullScroll(View.FOCUS_DOWN);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    } catch (IOException e) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                terminalText.append("\n[Shell disconnected: " + e.getMessage() + "]\n");
+                            }
+                        });
+                    }
+                }
+            }).start();
+
+            // Initialize shell directory to workspace path
+            String initCmd = "cd " + workspaceDir.getAbsolutePath() + " && clear\n";
+            shellOutputStream.write(initCmd.getBytes(StandardCharsets.UTF_8));
+            shellOutputStream.flush();
+
+        } catch (Exception e) {
+            terminalText.append("Failed to start shell process: " + e.getMessage() + "\n");
         }
-
-        terminalText.append(response.toString());
-        
-        // Auto scroll to bottom
-        terminalScroll.post(new Runnable() {
-            @Override
-            public void run() {
-                terminalScroll.fullScroll(View.FOCUS_DOWN);
-            }
-        });
     }
 
-    // JavaScript interface to receive calls from Monaco Editor Web App
+    private void submitTerminalCommand(String cmd) {
+        if (shellOutputStream == null) {
+            terminalText.append("\nShell process not running.\n");
+            return;
+        }
+        try {
+            // Write commands to interactive shell
+            shellOutputStream.write((cmd + "\n").getBytes(StandardCharsets.UTF_8));
+            shellOutputStream.flush();
+        } catch (Exception e) {
+            terminalText.append("\nError writing to shell: " + e.getMessage() + "\n");
+        }
+    }
+
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up live shell process
+        if (shellProcess != null) {
+            shellProcess.destroy();
+        }
+    }
+
+    // JavaScript interface bridge class loaded inside Monaco WebView
     private class WebAppInterface {
         @JavascriptInterface
         public void onCursorChanged(final int line, final int column) {
@@ -379,6 +496,25 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     statusLanguage.setText("UTF-8   " + language);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void saveActiveFile(final String content) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (activeFile != null) {
+                        try {
+                            FileOutputStream fos = new FileOutputStream(activeFile);
+                            fos.write(content.getBytes(StandardCharsets.UTF_8));
+                            fos.close();
+                            Toast.makeText(MainActivity.this, activeFile.getName() + " saved successfully!", Toast.LENGTH_SHORT).show();
+                        } catch (Exception e) {
+                            Toast.makeText(MainActivity.this, "Save failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
                 }
             });
         }
