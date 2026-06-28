@@ -2,6 +2,8 @@ package com.example.thecodicore;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +12,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -67,6 +70,18 @@ public class MainActivity extends AppCompatActivity {
 
     // Explorer dynamic file list
     private LinearLayout explorerFileList;
+
+    // Global Search & Replace views
+    private EditText searchInput;
+    private EditText replaceInput;
+    private Button btnSearchSubmit;
+    private Button btnReplaceAll;
+    private LinearLayout searchResultsContainer;
+
+    // Source Control views
+    private EditText gitCommitMessage;
+    private Button btnGitCommit;
+    private TextView gitStatusInfo;
 
     private WebView webView;
     private int activeTabId = R.id.icon_explorer;
@@ -132,6 +147,18 @@ public class MainActivity extends AppCompatActivity {
         btnCloseTerminal = findViewById(R.id.btn_close_terminal);
 
         explorerFileList = findViewById(R.id.explorer_file_list);
+
+        // Search & Replace Views
+        searchInput = findViewById(R.id.search_input);
+        replaceInput = findViewById(R.id.replace_input);
+        btnSearchSubmit = findViewById(R.id.btn_search_submit);
+        btnReplaceAll = findViewById(R.id.btn_replace_all);
+        searchResultsContainer = findViewById(R.id.search_results_container);
+
+        // Git views
+        gitCommitMessage = findViewById(R.id.git_commit_message);
+        btnGitCommit = findViewById(R.id.btn_git_commit);
+        gitStatusInfo = findViewById(R.id.git_status_info);
 
         // 3. Configure Click Listeners for Sidebar Icons
         setupTab(iconExplorer, R.id.icon_explorer, "EXPLORER", contentExplorer);
@@ -216,14 +243,38 @@ public class MainActivity extends AppCompatActivity {
         });
         statusSave.setVisibility(View.GONE); // Hidden initially on Welcome Page
 
-        // 7. Configure Live Shell Terminal
-        findViewById(R.id.status_bar).setOnClickListener(new View.OnClickListener() {
+        // 7. Command Palette Button click listener
+        findViewById(R.id.btn_command_palette).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                toggleTerminal();
+                webView.evaluateJavascript("window.showCommandPalette();", null);
             }
         });
 
+        // 8. Global Search & Replace Action bindings
+        btnSearchSubmit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performGlobalSearch();
+            }
+        });
+
+        btnReplaceAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performGlobalReplace();
+            }
+        });
+
+        // 9. Git Source Control commit action
+        btnGitCommit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performGitCommitAndPush();
+            }
+        });
+
+        // 10. Configure Live Shell Terminal
         btnCloseTerminal.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -232,7 +283,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Terminal input submit action listener
         terminalInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -353,6 +403,177 @@ public class MainActivity extends AppCompatActivity {
         webView.evaluateJavascript("window.Android.saveActiveFile(window.editor.getValue());", null);
     }
 
+    // Dynamic Global Search Logic
+    private void performGlobalSearch() {
+        searchResultsContainer.removeAllViews();
+        String query = searchInput.getText().toString().trim();
+        if (query.isEmpty()) {
+            Toast.makeText(this, "Please enter a search query!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        File[] files = workspaceDir.listFiles();
+        if (files == null) return;
+
+        int totalMatches = 0;
+
+        for (final File file : files) {
+            if (file.isDirectory()) continue;
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
+                String line;
+                int lineNumber = 0;
+                boolean fileHeaderAdded = false;
+
+                while ((line = reader.readLine()) != null) {
+                    lineNumber++;
+                    if (line.contains(query)) {
+                        totalMatches++;
+                        if (!fileHeaderAdded) {
+                            TextView header = new TextView(this);
+                            header.setText("📄 " + file.getName());
+                            header.setTextColor(Color.parseColor("#ffffff"));
+                            header.setTextSize(11);
+                            header.setPadding(0, 10, 0, 4);
+                            searchResultsContainer.addView(header);
+                            fileHeaderAdded = true;
+                        }
+
+                        final int matchLine = lineNumber;
+                        TextView result = new TextView(this);
+                        result.setText("    L" + lineNumber + ": " + line.trim());
+                        result.setTextColor(Color.parseColor("#858585"));
+                        result.setTextSize(11);
+                        result.setPadding(0, 4, 0, 4);
+                        result.setClickable(true);
+                        result.setFocusable(true);
+                        
+                        // Select file and jump/scroll to matching line in editor on result click
+                        result.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                loadFileIntoEditor(file);
+                                webView.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        webView.evaluateJavascript(
+                                            "window.editor.revealLineInCenter(" + matchLine + "); " +
+                                            "window.editor.setPosition({lineNumber: " + matchLine + ", column: 1});", 
+                                            null
+                                        );
+                                    }
+                                }, 300); // Small delay to guarantee editor content loads first
+                            }
+                        });
+
+                        searchResultsContainer.addView(result);
+                    }
+                }
+                reader.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if (totalMatches == 0) {
+            TextView noMatches = new TextView(this);
+            noMatches.setText("No search matches found.");
+            noMatches.setTextColor(Color.parseColor("#858585"));
+            noMatches.setTextSize(12);
+            searchResultsContainer.addView(noMatches);
+        }
+    }
+
+    // Dynamic Global Search and Replace Logic
+    private void performGlobalReplace() {
+        String query = searchInput.getText().toString().trim();
+        final String replacement = replaceInput.getText().toString();
+        if (query.isEmpty()) {
+            Toast.makeText(this, "Please enter a search query!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        File[] files = workspaceDir.listFiles();
+        if (files == null) return;
+
+        int totalReplacements = 0;
+
+        for (File file : files) {
+            if (file.isDirectory()) continue;
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                boolean modified = false;
+
+                while ((line = reader.readLine()) != null) {
+                    if (line.contains(query)) {
+                        line = line.replace(query, replacement);
+                        modified = true;
+                        totalReplacements++;
+                    }
+                    sb.append(line).append("\n");
+                }
+                reader.close();
+
+                if (modified) {
+                    FileOutputStream fos = new FileOutputStream(file);
+                    fos.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+                    fos.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        Toast.makeText(this, "Replaced " + totalReplacements + " occurrences across files!", Toast.LENGTH_LONG).show();
+        
+        // Reload explorer tree list and reset editor if active file was modified
+        loadWorkspaceFiles();
+        if (activeFile != null) {
+            loadFileIntoEditor(activeFile);
+        }
+        performGlobalSearch(); // Update Search results indicator list
+    }
+
+    // Git commit & push integration
+    private void performGitCommitAndPush() {
+        String msg = gitCommitMessage.getText().toString().trim();
+        if (msg.isEmpty()) {
+            Toast.makeText(this, "Please enter a commit message!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Open terminal panel automatically to stream progress
+        terminalDivider.setVisibility(View.VISIBLE);
+        terminalPanel.setVisibility(View.VISIBLE);
+        terminalInput.requestFocus();
+
+        // Write sequential git actions to live terminal shell streams
+        submitTerminalCommand("git add .");
+        submitTerminalCommand("git commit -m \"" + msg + "\"");
+        submitTerminalCommand("git push");
+
+        gitCommitMessage.setText("");
+        Toast.makeText(this, "Commit & Push commands submitted to Terminal!", Toast.LENGTH_LONG).show();
+    }
+
+    private void updateGitStatusSidebar() {
+        if (shellOutputStream == null) return;
+        
+        // Simple mock background git status check (since real git is dependent on user device having git binaries)
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                gitStatusInfo.setText(
+                    "▼ Changes\n" +
+                    "  U app/src/main/assets/index.html\n" +
+                    "  M app/src/main/java/MainActivity.java\n\n" +
+                    "Ready to commit changes."
+                );
+            }
+        });
+    }
+
     private void setupTab(final ImageView tabIcon, final int tabId, final String title, final View contentView) {
         tabIcon.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -387,6 +608,10 @@ public class MainActivity extends AppCompatActivity {
 
                     tabIcon.setBackgroundColor(Color.parseColor("#1e1e1e"));
                     activeTabId = tabId;
+
+                    if (tabId == R.id.icon_source_control) {
+                        updateGitStatusSidebar();
+                    }
                 }
             }
         });
@@ -560,7 +785,6 @@ public class MainActivity extends AppCompatActivity {
                         activeFile = new File(path);
                         statusSave.setVisibility(View.VISIBLE);
                         
-                        // Find and highlight in the sidebar explorer tree
                         for (int i = 0; i < explorerFileList.getChildCount(); i++) {
                             View child = explorerFileList.getChildAt(i);
                             if (child instanceof TextView) {
@@ -581,7 +805,6 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    // Create a new file programmatically
                     int index = 1;
                     File newFile = new File(workspaceDir, "Untitled-" + index + ".java");
                     while (newFile.exists()) {
@@ -610,7 +833,6 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    // Make the Explorer side panel visible and highlight Explorer tab
                     sidebarPanel.setVisibility(View.VISIBLE);
                     sidebarTitle.setText("EXPLORER");
                     
@@ -637,7 +859,6 @@ public class MainActivity extends AppCompatActivity {
                     if (file.exists()) {
                         loadFileIntoEditor(file);
                         
-                        // Set sidebar highlights
                         for (int i = 0; i < explorerFileList.getChildCount(); i++) {
                             View child = explorerFileList.getChildAt(i);
                             if (child instanceof TextView) {
@@ -659,7 +880,6 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     if (type.equals("theme")) {
-                        // Open Settings panel and show a Toast guide
                         sidebarPanel.setVisibility(View.VISIBLE);
                         sidebarTitle.setText("SETTINGS");
                         
@@ -673,6 +893,30 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, "Use the 'Editor Theme' buttons to switch theme styles!", Toast.LENGTH_LONG).show();
                     } else {
                         Toast.makeText(MainActivity.this, "VS Code Mobile edition walkthrough: Click status bar to toggle terminal, Ctrl+S to save files, and sidebar to explore!", Toast.LENGTH_LONG).show();
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void triggerSidebarAction(final String action) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (action.equals("toggle")) {
+                        if (sidebarPanel.getVisibility() == View.VISIBLE) {
+                            sidebarPanel.setVisibility(View.GONE);
+                        } else {
+                            sidebarPanel.setVisibility(View.VISIBLE);
+                        }
+                    } else if (action.equals("settings")) {
+                        iconSettings.performClick();
+                    } else if (action.equals("terminal")) {
+                        toggleTerminal();
+                    } else if (action.equals("git")) {
+                        iconSourceControl.performClick();
+                    } else if (action.equals("clearTerm")) {
+                        terminalText.setText("sh-4.4$ ");
                     }
                 }
             });

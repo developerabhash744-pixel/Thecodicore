@@ -23,13 +23,40 @@
             android:scaleType="fitCenter"
             android:contentDescription="App Logo" />
 
-        <!-- Spacer to push options to the right -->
+        <!-- Left spacer -->
         <View
             android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <!-- Top Bar Title/Menu Mockup (shifted to the right) -->
+        <!-- Command Palette Input in the center -->
+        <LinearLayout
+            android:id="@+id/btn_command_palette"
+            android:layout_width="250dp"
+            android:layout_height="26dp"
+            android:background="@color/vscode_card_bg"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp"
+            android:layout_marginHorizontal="12dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔍  Thecodicore: Command Palette..."
+                android:textColor="@color/vscode_text_secondary"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Right spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Top Bar Title/Menu (shifted to the right) -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -200,16 +227,88 @@
                     android:orientation="vertical"
                     android:visibility="gone">
 
-                    <EditText
+                    <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Search"
+                        android:text="SEARCH &amp; REPLACE"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp" />
+
+                    <!-- Search Input -->
+                    <EditText
+                        android:id="@+id/search_input"
+                        android:layout_width="match_parent"
+                        android:layout_height="32dp"
+                        android:hint="Search query"
                         android:textColorHint="@color/vscode_text_secondary"
                         android:textColor="@color/vscode_text_primary"
                         android:background="@color/vscode_card_bg"
                         android:padding="6dp"
                         android:textSize="12sp"
-                        android:maxLines="1" />
+                        android:maxLines="1"
+                        android:imeOptions="actionSearch"
+                        android:inputType="text" />
+
+                    <!-- Replace Input -->
+                    <EditText
+                        android:id="@+id/replace_input"
+                        android:layout_width="match_parent"
+                        android:layout_height="32dp"
+                        android:hint="Replace string"
+                        android:textColorHint="@color/vscode_text_secondary"
+                        android:textColor="@color/vscode_text_primary"
+                        android:background="@color/vscode_card_bg"
+                        android:padding="6dp"
+                        android:textSize="12sp"
+                        android:maxLines="1"
+                        android:layout_marginTop="6dp"
+                        android:inputType="text" />
+
+                    <!-- Actions Button Row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="8dp">
+
+                        <Button
+                            android:id="@+id/btn_search_submit"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:text="Search"
+                            android:textSize="11sp"
+                            android:backgroundTint="@color/vscode_status_bar"
+                            android:textColor="@android:color/white" />
+
+                        <Button
+                            android:id="@+id/btn_replace_all"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:text="Replace All"
+                            android:textSize="11sp"
+                            android:layout_marginStart="6dp"
+                            android:backgroundTint="@color/vscode_card_bg"
+                            android:textColor="@color/vscode_text_primary" />
+                    </LinearLayout>
+
+                    <!-- Scrollable Search Results -->
+                    <ScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="12dp"
+                        android:fillViewport="true">
+
+                        <LinearLayout
+                            android:id="@+id/search_results_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+                    </ScrollView>
+
                 </LinearLayout>
 
                 <!-- Source Control Content -->
@@ -223,17 +322,46 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Source Control: Git"
-                        android:textColor="@color/vscode_text_secondary"
-                        android:textSize="11sp" />
+                        android:text="SOURCE CONTROL"
+                        android:textColor="@color/vscode_text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp" />
 
+                    <!-- Commit Message Input -->
+                    <EditText
+                        android:id="@+id/git_commit_message"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:hint="Message (Enter to commit)"
+                        android:textColorHint="@color/vscode_text_secondary"
+                        android:textColor="@color/vscode_text_primary"
+                        android:background="@color/vscode_card_bg"
+                        android:padding="6dp"
+                        android:gravity="top"
+                        android:textSize="12sp"
+                        android:inputType="textShortMessage" />
+
+                    <!-- Commit & Push Button -->
+                    <Button
+                        android:id="@+id/btn_git_commit"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:text="Commit &amp; Push"
+                        android:textSize="11sp"
+                        android:layout_marginTop="8dp"
+                        android:backgroundTint="@color/vscode_status_bar"
+                        android:textColor="@android:color/white" />
+
+                    <!-- Git changes/status text view -->
                     <TextView
+                        android:id="@+id/git_status_info"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="✔ MainActivity.java [M]"
-                        android:textColor="@color/vscode_text_primary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="8dp" />
+                        android:text="\nScanning changes..."
+                        android:textColor="@color/vscode_text_secondary"
+                        android:textSize="11sp"
+                        android:layout_marginTop="12dp" />
                 </LinearLayout>
 
                 <!-- Debug Content -->

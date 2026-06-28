@@ -21,6 +21,7 @@
             flex-direction: column;
             width: 100%;
             height: 100%;
+            position: relative;
         }
 
         /* 1. Tab Bar (VS Code styled) */
@@ -193,6 +194,64 @@
             color: #858585;
             margin: 0;
         }
+
+        /* 4. Command Palette Overlay Overlay styling */
+        #command-palette {
+            display: none;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 500px;
+            background-color: #252526;
+            border: 1px solid #007acc;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 10000;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 6px;
+        }
+
+        #palette-search {
+            width: 100%;
+            background-color: #3c3c3c;
+            border: 1px solid #6b6b6b;
+            color: #ffffff;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            margin-bottom: 6px;
+            box-sizing: border-box;
+            outline: none;
+            border-radius: 2px;
+        }
+
+        #palette-search:focus {
+            border-color: #007acc;
+        }
+
+        #palette-list {
+            max-height: 220px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .palette-option {
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #cccccc;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: background-color 0.15s;
+        }
+
+        .palette-option.selected {
+            background-color: #094771;
+            color: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -264,12 +323,32 @@
                 </div>
             </div>
         </div>
+
+        <!-- Command Palette Overlay -->
+        <div id="command-palette">
+            <input id="palette-search" type="text" placeholder="Type a command to execute..." />
+            <div id="palette-list"></div>
+        </div>
     </div>
 
     <!-- Monaco loader -->
     <script src="vs/loader.js"></script>
     <script>
         var activeFilePath = "";
+
+        // Standard VS Code Command Palette Command Definition List
+        var commands = [
+            { id: "settings", text: "Preferences: Open Settings" },
+            { id: "welcome", text: "View: Open Welcome Page" },
+            { id: "sidebar", text: "View: Toggle Side Bar" },
+            { id: "terminal", text: "View: Toggle Terminal" },
+            { id: "newfile", text: "File: Create New File" },
+            { id: "save", text: "File: Save Active File" },
+            { id: "gitCommit", text: "Git: Open Source Control" },
+            { id: "clearTerm", text: "Terminal: Clear Console Screen" }
+        ];
+        var selectedPaletteIndex = 0;
+        var filteredCommands = [];
 
         require.config({ paths: { vs: 'vs' } });
 
@@ -397,6 +476,13 @@
             }
         }
 
+        // Search panel file loader
+        window.openFileAtLine = function(path, line) {
+            if (window.Android && window.Android.openFileAndScrollToLine) {
+                window.Android.openFileAndScrollToLine(path, line);
+            }
+        };
+
         function triggerOpenFile() {
             if (window.Android && window.Android.onOpenFileClicked) {
                 window.Android.onOpenFileClicked();
@@ -430,6 +516,96 @@
                 list.appendChild(item);
             });
         };
+
+        // Command Palette Logic
+        window.showCommandPalette = function () {
+            var palette = document.getElementById('command-palette');
+            palette.style.display = 'flex';
+            var search = document.getElementById('palette-search');
+            search.value = "";
+            search.focus();
+            
+            filterCommands("");
+        };
+
+        function closeCommandPalette() {
+            document.getElementById('command-palette').style.display = 'none';
+        }
+
+        function filterCommands(query) {
+            filteredCommands = commands.filter(function (cmd) {
+                return cmd.text.toLowerCase().includes(query.toLowerCase());
+            });
+            selectedPaletteIndex = 0;
+            renderPaletteOptions();
+        }
+
+        function renderPaletteOptions() {
+            var list = document.getElementById('palette-list');
+            list.innerHTML = "";
+            filteredCommands.forEach(function (cmd, idx) {
+                var option = document.createElement('div');
+                option.className = "palette-option" + (idx === selectedPaletteIndex ? " selected" : "");
+                option.innerText = cmd.text;
+                option.onclick = function () {
+                    executeCommand(cmd.id);
+                };
+                list.appendChild(option);
+            });
+        }
+
+        function executeCommand(id) {
+            closeCommandPalette();
+            if (id === "settings") {
+                if (window.Android && window.Android.triggerSidebarAction) window.Android.triggerSidebarAction("settings");
+            } else if (id === "welcome") {
+                showWelcome();
+            } else if (id === "sidebar") {
+                if (window.Android && window.Android.triggerSidebarAction) window.Android.triggerSidebarAction("toggle");
+            } else if (id === "terminal") {
+                if (window.Android && window.Android.triggerSidebarAction) window.Android.triggerSidebarAction("terminal");
+            } else if (id === "newfile") {
+                triggerNewFile();
+            } else if (id === "save") {
+                if (window.Android && window.Android.saveActiveFile) window.Android.saveActiveFile(window.editor.getValue());
+            } else if (id === "gitCommit") {
+                if (window.Android && window.Android.triggerSidebarAction) window.Android.triggerSidebarAction("git");
+            } else if (id === "clearTerm") {
+                if (window.Android && window.Android.triggerSidebarAction) window.Android.triggerSidebarAction("clearTerm");
+            }
+        }
+
+        // Palette keyboard & focus listeners
+        document.getElementById('palette-search').oninput = function (e) {
+            filterCommands(e.target.value);
+        };
+
+        document.getElementById('palette-search').onkeydown = function (e) {
+            if (e.key === "Escape") {
+                closeCommandPalette();
+            } else if (e.key === "ArrowDown") {
+                e.preventDefault();
+                selectedPaletteIndex = (selectedPaletteIndex + 1) % filteredCommands.length;
+                renderPaletteOptions();
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                selectedPaletteIndex = (selectedPaletteIndex - 1 + filteredCommands.length) % filteredCommands.length;
+                renderPaletteOptions();
+            } else if (e.key === "Enter") {
+                e.preventDefault();
+                if (filteredCommands.length > 0) {
+                    executeCommand(filteredCommands[selectedPaletteIndex].id);
+                }
+            }
+        };
+
+        // Close palette if clicking outside
+        document.addEventListener('mousedown', function (e) {
+            var palette = document.getElementById('command-palette');
+            if (palette.style.display === 'flex' && !palette.contains(e.target)) {
+                closeCommandPalette();
+            }
+        });
     </script>
 </body>
 </html>
